@@ -53,5 +53,44 @@
 
         ./devshell.nix
       ];
+
+      flake = {
+        homeModules.oleina-shell = {
+          config,
+          pkgs,
+          lib,
+          ...
+        }:
+          with lib; let
+            cfg = config.services.oleina-shell;
+          in {
+            options.services.oleina-shell = {
+              enable = mkEnableOption "Enable the custom oleina-shell environment";
+            };
+
+            config = let
+              defaultConfig = "default";
+            in
+              mkIf cfg.enable {
+                package = pkgs.symlinkJoin {
+                  name = "quickshell";
+                  paths = [
+                    # TODO: should be valid for hyprland as well, for the tablet.
+                    config.programs.niri.package
+
+                    pkgs.quickshell
+                  ];
+                };
+
+                enable = true;
+                activeConfig = defaultConfig;
+                systemd.enable = true;
+                configs = {
+                  ${defaultConfig} = "${self}/confs/quickshell";
+                };
+              
+              };
+          };
+      };
     };
 }
